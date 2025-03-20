@@ -1,0 +1,39 @@
+import java.sql.*;
+
+public class EmployeeDataFetcher {
+    public static void main(String[] args) {
+        String url = "jdbc:mysql://localhost:3306/Nchindo";
+        String username = "Reeece";
+        String password = "qyTF44hrhfke";
+        
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(url, username, password);
+            statement = connection.createStatement();
+            String query = "SELECT EmpID, Name, Salary FROM Employee";
+            resultSet = statement.executeQuery(query);
+            
+            System.out.println("EmpID\tName\tSalary");
+            while (resultSet.next()) {
+                int empID = resultSet.getInt("EmpID");
+                String name = resultSet.getString("Name");
+                double salary = resultSet.getDouble("Salary");
+                System.out.println(empID + "\t" + name + "\t" + salary);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (resultSet != null) resultSet.close();
+                if (statement != null) statement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
