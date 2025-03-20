@@ -1,0 +1,147 @@
+import java.sql.*;
+import java.util.Scanner;
+
+public class ProductCRUD {
+    private static final String url = "jdbc:mysql://localhost:3306/Nchindo";
+    private static final String username = "Reeece";
+    private static final String password = "qyTF44hrhfke";
+    
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            connection.setAutoCommit(false);
+
+            while (true) {
+                System.out.println("\nProduct CRUD Operations");
+                System.out.println("1. Create Product");
+                System.out.println("2. Read Product");
+                System.out.println("3. Update Product");
+                System.out.println("4. Delete Product");
+                System.out.println("5. Exit");
+                System.out.print("Choose an operation: ");
+                
+                int choice = scanner.nextInt();
+                scanner.nextLine();
+
+                switch (choice) {
+                    case 1:
+                        System.out.print("Enter Product Name: ");
+                        String productName = scanner.nextLine();
+                        System.out.print("Enter Price: ");
+                        double price = scanner.nextDouble();
+                        System.out.print("Enter Quantity: ");
+                        int quantity = scanner.nextInt();
+                        createProduct(connection, productName, price, quantity);
+                        break;
+
+                    case 2:
+                        System.out.print("Enter ProductID to view: ");
+                        int productID = scanner.nextInt();
+                        readProduct(connection, productID);
+                        break;
+
+                    case 3:
+                        System.out.print("Enter ProductID to update: ");
+                        productID = scanner.nextInt();
+                        scanner.nextLine();
+                        System.out.print("Enter new Product Name: ");
+                        productName = scanner.nextLine();
+                        System.out.print("Enter new Price: ");
+                        price = scanner.nextDouble();
+                        System.out.print("Enter new Quantity: ");
+                        quantity = scanner.nextInt();
+                        updateProduct(connection, productID, productName, price, quantity);
+                        break;
+
+                    case 4:
+                        System.out.print("Enter ProductID to delete: ");
+                        productID = scanner.nextInt();
+                        deleteProduct(connection, productID);
+                        break;
+
+                    case 5:
+                        System.out.println("Exiting...");
+                        connection.commit();
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice! Please try again.");
+                        break;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createProduct(Connection connection, String productName, double price, int quantity) {
+        String insertQuery = "INSERT INTO Product (ProductName, Price, Quantity) VALUES (?, ?, ?)";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+            preparedStatement.setString(1, productName);
+            preparedStatement.setDouble(2, price);
+            preparedStatement.setInt(3, quantity);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Product created successfully.");
+            }
+        } catch (SQLException e) {
+            handleTransactionFailure(connection, e);
+        }
+    }
+
+    private static void readProduct(Connection connection, int productID) {
+        String selectQuery = "SELECT * FROM Product WHERE ProductID = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(selectQuery)) {
+            preparedStatement.setInt(1, productID);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                System.out.println("ProductID: " + resultSet.getInt("ProductID"));
+                System.out.println("ProductName: " + resultSet.getString("ProductName"));
+                System.out.println("Price: " + resultSet.getDouble("Price"));
+                System.out.println("Quantity: " + resultSet.getInt("Quantity"));
+            } else {
+                System.out.println("Product not found!");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void updateProduct(Connection connection, int productID, String productName, double price, int quantity) {
+        String updateQuery = "UPDATE Product SET ProductName = ?, Price = ?, Quantity = ? WHERE ProductID = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+            preparedStatement.setString(1, productName);
+            preparedStatement.setDouble(2, price);
+            preparedStatement.setInt(3, quantity);
+            preparedStatement.setInt(4, productID);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Product updated successfully.");
+            }
+        } catch (SQLException e) {
+            handleTransactionFailure(connection, e);
+        }
+    }
+
+    private static void deleteProduct(Connection connection, int productID) {
+        String deleteQuery = "DELETE FROM Product WHERE ProductID = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery)) {
+            preparedStatement.setInt(1, productID);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Product deleted successfully.");
+            }
+        } catch (SQLException e) {
+            handleTransactionFailure(connection, e);
+        }
+    }
+
+    private static void handleTransactionFailure(Connection connection, SQLException e) {
+        try {
+            connection.rollback();
+            System.out.println("Transaction failed: " + e.getMessage());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
